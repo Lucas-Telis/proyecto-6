@@ -2,24 +2,27 @@ import serverless from 'serverless-http'
 import mongoose from 'mongoose'
 import app from '../src/app.js'
 
+let isConnected = false
+
 const MONGODB_URI =
-  process.env.MONGODB_URI || 'mongodb://localhost:27017/proyecto-6'
-let connPromise = null
-async function connectOnce() {
-  if (connPromise) return connPromise
-  connPromise = mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  })
-  return connPromise
+  process.env.MONGODB_URI ||
+  'mongodb+srv://lucas1234:lucastelis27@cluster0.l04pdv2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+
+async function connectDB() {
+  if (isConnected) return
+  try {
+    const db = await mongoose.connect(MONGODB_URI, {
+      bufferCommands: false
+    })
+    isConnected = db.connections[0].readyState
+    console.log('✅ MongoDB connected on Vercel')
+  } catch (err) {
+    console.error('❌ MongoDB connection error:', err)
+  }
 }
 
 export default async function handler(req, res) {
-  try {
-    await connectOnce()
-    return serverless(app)(req, res)
-  } catch (err) {
-    console.error('DB connection error', err)
-    res.status(500).json({ error: 'DB connection error' })
-  }
+  await connectDB()
+  const expressHandler = serverless(app)
+  return expressHandler(req, res)
 }
