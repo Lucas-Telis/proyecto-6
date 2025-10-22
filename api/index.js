@@ -1,24 +1,39 @@
-import serverless from 'serverless-http'
 import mongoose from 'mongoose'
+import serverless from 'serverless-http'
 import app from '../src/app.js'
 
-let isConnected = false
+const MONGODB_URI = process.env.MONGODB_URI
+let cached = global.mongoose
 
-const MONGODB_URI =
-  process.env.MONGODB_URI ||
-  'mongodb+srv://lucas1234@cluster0.l04pdv2.mongodb.net/proyecto-6?retryWrites=true&w=majority&appName=Cluster0'
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null }
+}
 
 async function connectDB() {
-  if (isConnected) return
-  try {
-    const db = await mongoose.connect(MONGODB_URI, {
-      bufferCommands: false
-    })
-    isConnected = db.connections[0].readyState
-    console.log('✅ MongoDB connected on Vercel')
-  } catch (err) {
-    console.error('❌ MongoDB connection error:', err)
+  if (cached.conn) return cached.conn
+  if (!cached.promise) {
+    cached.promise = mongoose
+      .connect(MONGODB_URI, {
+        bufferCommands: false
+      })
+      .then((mongoose) => {
+        console.log('✅ MongoDB conectado en Vercel')
+        return mongoose
+      })
+      .catch((err) => {
+        console.error('❌ Error de conexión MongoDB:', err.message)
+        throw err
+      })
   }
+  cached.conn = await cached.promise
+  return cached.conn
+}
+
+const handler = serverless(app)
+
+export default async function main(req, res) {
+  await connectDB()
+  return handler(req, res)
 }
 
 export default async function handler(req, res) {
