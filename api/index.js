@@ -35,3 +35,9 @@ export default async function main(req, res) {
   await connectDB()
   return handler(req, res)
 }
+
+export default async function handler(req, res) {
+  await connectDB()
+  const expressHandler = serverless(app)
+  return expressHandler(req, res)
+}
