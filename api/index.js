@@ -6,7 +6,7 @@ let isConnected = false
 
 const MONGODB_URI =
   process.env.MONGODB_URI ||
-  'mongodb+srv://lucas1234@cluster0.l04pdv2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+  'mongodb+srv://lucas1234:lucastelis27@cluster0.l04pdv2.mongodb.net/proyecto-6?retryWrites=true&w=majority&appName=Cluster0'
 
 async function connectDB() {
   if (isConnected) return
